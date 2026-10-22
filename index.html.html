@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>227 Morningside Dr Flipbook</title>
+
+<script src="https://unpkg.com/page-flip/dist/js/page-flip.browser.js"></script>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    background: #f3f3f3;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+
+/* =========================
+   VIEWER
+========================= */
+
+.viewer {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 25px 90px 55px;
+
+    overflow: hidden;
+}
+
+
+/* =========================
+   BOOK STAGE
+========================= */
+
+.book-stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.book-positioner {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transition: transform 0.35s ease;
+}
+
+#book {
+    margin: 0;
+}
+
+
+/* =========================
+   PAGES
+========================= */
+
+.page {
+    background: #fff;
+    overflow: hidden;
+}
+
+.page img {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+    object-fit: fill;
+
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+
+/* =========================
+   BOOK SHADOW
+========================= */
+
+.stf__parent {
+    box-shadow:
+        0 3px 7px rgba(0,0,0,.08),
+        0 16px 32px rgba(0,0,0,.13);
+}
+
+
+/* =========================
+   REALISTIC CENTER BINDING
+========================= */
+
+/*
+   This is NOT permanently visible.
+
+   JavaScript only turns it on when
+   the book is resting on an interior
+   two-page spread.
+*/
+
+.binding {
+    position: absolute;
+
+    top: 0;
+    bottom: 0;
+
+    left: 50%;
+
+    width: 34px;
+
+    transform: translateX(-50%);
+
+    pointer-events: none;
+
+    z-index: 50;
+
+    opacity: 0;
+
+    transition: opacity 0.12s ease;
+}
+
+
+/*
+   LEFT PAGE:
+   subtle shadow approaching gutter
+*/
+
+.binding::before {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    bottom: 0;
+
+    right: 50%;
+
+    width: 17px;
+
+    background:
+        linear-gradient(
+            to right,
+            rgba(0,0,0,0),
+            rgba(0,0,0,.015) 35%,
+            rgba(0,0,0,.055) 72%,
+            rgba(0,0,0,.15) 100%
+        );
+}
+
+
+/*
+   RIGHT PAGE:
+   matching gutter shadow
+*/
+
+.binding::after {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    bottom: 0;
+
+    left: 50%;
+
+    width: 17px;
+
+    background:
+        linear-gradient(
+            to right,
+            rgba(0,0,0,.15) 0%,
+            rgba(0,0,0,.055) 28%,
+            rgba(0,0,0,.015) 65%,
+            rgba(0,0,0,0) 100%
+        );
+}
+
+
+/*
+   VERY THIN PHYSICAL CREASE
+*/
+
+.binding-line {
+    position: absolute;
+
+    top: 0;
+    bottom: 0;
+
+    left: 50%;
+
+    width: 1px;
+
+    transform: translateX(-50%);
+
+    background:
+        rgba(0,0,0,.28);
+
+    box-shadow:
+        -1px 0 1px rgba(0,0,0,.08),
+         1px 0 1px rgba(255,255,255,.32);
+
+    z-index: 2;
+}
+
+
+/*
+   Only applied when book
+   is sitting open.
+*/
+
+.binding.visible {
+    opacity: 1;
+}
+
+
+/* =========================
+   NAVIGATION
+========================= */
+
+.arrow {
+    position: fixed;
+
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    width: 64px;
+    height: 64px;
+
+    border-radius: 50%;
+
+    border: 1px solid #bdbdbd;
+
+    background: rgba(255,255,255,.96);
+
+    color: #222;
+
+    font-size: 39px;
+    font-weight: 300;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    z-index: 1000;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,.08);
+
+    transition:
+        transform .15s ease,
+        background .15s ease,
+        opacity .15s ease;
+}
+
+.arrow:hover {
+    background: #fff;
+
+    transform:
+        translateY(-50%)
+        scale(1.07);
+}
+
+.arrow:active {
+    transform:
+        translateY(-50%)
+        scale(.96);
+}
+
+#prev {
+    left: 22px;
+}
+
+#next {
+    right: 22px;
+}
+
+
+/* =========================
+   COUNTER
+========================= */
+
+.counter {
+    position: fixed;
+
+    bottom: 12px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    background: rgba(255,255,255,.96);
+
+    border: 1px solid #d4d4d4;
+
+    border-radius: 20px;
+
+    padding: 7px 14px;
+
+    font-size: 12px;
+    color: #555;
+
+    z-index: 1000;
+
+    box-shadow:
+        0 2px 7px rgba(0,0,0,.05);
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 768px) {
+
+    .viewer {
+        padding: 12px 8px 65px;
+    }
+
+    .arrow {
+        top: auto;
+        bottom: 10px;
+
+        transform: none;
+
+        width: 48px;
+        height: 48px;
+
+        font-size: 30px;
+    }
+
+    .arrow:hover {
+        transform: scale(1.05);
+    }
+
+    #prev {
+        left: 15px;
+    }
+
+    #next {
+        right: 15px;
+    }
+
+    .counter {
+        bottom: 17px;
+    }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<div class="viewer">
+
+    <div class="book-stage">
+
+        <div
+            id="book-positioner"
+            class="book-positioner"
+        >
+
+            <div id="book">
+
+                <div class="page"><img src="1.jpg" alt="Page 1"></div>
+                <div class="page"><img src="2.jpg" alt="Page 2"></div>
+                <div class="page"><img src="3.jpg" alt="Page 3"></div>
+                <div class="page"><img src="4.jpg" alt="Page 4"></div>
+                <div class="page"><img src="5.jpg" alt="Page 5"></div>
+                <div class="page"><img src="6.jpg" alt="Page 6"></div>
+                <div class="page"><img src="7.jpg" alt="Page 7"></div>
+                <div class="page"><img src="8.jpg" alt="Page 8"></div>
+                <div class="page"><img src="9.jpg" alt="Page 9"></div>
+                <div class="page"><img src="10.jpg" alt="Page 10"></div>
+                <div class="page"><img src="11.jpg" alt="Page 11"></div>
+                <div class="page"><img src="12.jpg" alt="Page 12"></div>
+                <div class="page"><img src="13.jpg" alt="Page 13"></div>
+                <div class="page"><img src="14.jpg" alt="Page 14"></div>
+                <div class="page"><img src="15.jpg" alt="Page 15"></div>
+                <div class="page"><img src="16.jpg" alt="Page 16"></div>
+                <div class="page"><img src="17.jpg" alt="Page 17"></div>
+                <div class="page"><img src="18.jpg" alt="Page 18"></div>
+                <div class="page"><img src="19.jpg" alt="Page 19"></div>
+                <div class="page"><img src="20.jpg" alt="Page 20"></div>
+                <div class="page"><img src="21.jpg" alt="Page 21"></div>
+                <div class="page"><img src="22.jpg" alt="Page 22"></div>
+                <div class="page"><img src="23.jpg" alt="Page 23"></div>
+                <div class="page"><img src="24.jpg" alt="Page 24"></div>
+                <div class="page"><img src="25.jpg" alt="Page 25"></div>
+                <div class="page"><img src="26.jpg" alt="Page 26"></div>
+                <div class="page"><img src="27.jpg" alt="Page 27"></div>
+                <div class="page"><img src="28.jpg" alt="Back Cover"></div>
+
+            </div>
+
+
+            <!--
+                Dynamic center gutter.
+                It sits at the exact center
+                of the open two-page spread.
+            -->
+
+            <div
+                id="binding"
+                class="binding"
+            >
+                <div class="binding-line"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<button
+    id="prev"
+    class="arrow"
+    aria-label="Previous page"
+>
+    ‹
+</button>
+
+
+<button
+    id="next"
+    class="arrow"
+    aria-label="Next page"
+>
+    ›
+</button>
+
+
+
+<div
+    id="counter"
+    class="counter"
+>
+    1 / 28
+</div>
+
+
+
+<audio
+    id="pageSound"
+    preload="auto"
+    src="page-flip.mp3.MP3"
+></audio>
+
+
+
+<script>
+
+
+/* ==============================
+   PAGE SIZE
+============================== */
+
+function calculatePageSize() {
+
+    const ratio =
+        11 / 8.5;
+
+
+    const availableWidth =
+        window.innerWidth - 190;
+
+
+    const availableHeight =
+        window.innerHeight - 100;
+
+
+    let pageWidth =
+        availableWidth / 2;
+
+
+    let pageHeight =
+        pageWidth / ratio;
+
+
+    if (
+        pageHeight >
+        availableHeight
+    ) {
+
+        pageHeight =
+            availableHeight;
+
+        pageWidth =
+            pageHeight * ratio;
+
+    }
+
+
+    pageWidth =
+        Math.max(
+            330,
+            pageWidth
+        );
+
+
+    pageHeight =
+        pageWidth / ratio;
+
+
+    return {
+
+        width:
+            Math.round(pageWidth),
+
+        height:
+            Math.round(pageHeight)
+
+    };
+
+}
+
+
+
+const pageSize =
+    calculatePageSize();
+
+
+
+/* ==============================
+   CREATE FLIPBOOK
+============================== */
+
+const pageFlip =
+    new St.PageFlip(
+        document.getElementById("book"),
+        {
+
+            width:
+                pageSize.width,
+
+            height:
+                pageSize.height,
+
+            size:
+                "fixed",
+
+            usePortrait:
+                false,
+
+            showCover:
+                true,
+
+            autoSize:
+                false,
+
+            drawShadow:
+                true,
+
+            maxShadowOpacity:
+                0.45,
+
+            flippingTime:
+                700,
+
+            mobileScrollSupport:
+                false,
+
+            useMouseEvents:
+                true
+
+        }
+    );
+
+
+
+pageFlip.loadFromHTML(
+    document.querySelectorAll(
+        ".page"
+    )
+);
+
+
+
+/* ==============================
+   ELEMENTS
+============================== */
+
+const prev =
+    document.getElementById(
+        "prev"
+    );
+
+
+const next =
+    document.getElementById(
+        "next"
+    );
+
+
+const counter =
+    document.getElementById(
+        "counter"
+    );
+
+
+const positioner =
+    document.getElementById(
+        "book-positioner"
+    );
+
+
+const binding =
+    document.getElementById(
+        "binding"
+    );
+
+
+const pageSound =
+    document.getElementById(
+        "pageSound"
+    );
+
+
+
+/* ==============================
+   SOUND
+============================== */
+
+function playPageSound() {
+
+    try {
+
+        pageSound.pause();
+
+        pageSound.currentTime = 0;
+
+        pageSound.volume = 0.35;
+
+
+        const playPromise =
+            pageSound.play();
+
+
+        if (
+            playPromise !==
+            undefined
+        ) {
+
+            playPromise.catch(
+                () => {}
+            );
+
+        }
+
+    }
+
+    catch (error) {}
+
+}
+
+
+
+/* ==============================
+   COVER / SPREAD POSITION
+============================== */
+
+function positionBook(index) {
+
+    const total =
+        pageFlip.getPageCount();
+
+
+    /*
+       FRONT COVER
+    */
+
+    if (
+        index === 0
+    ) {
+
+        positioner.style.transform =
+            "translateX(-" +
+            (pageSize.width / 2) +
+            "px)";
+
+
+        /*
+           No binding on a
+           single cover.
+        */
+
+        binding.classList.remove(
+            "visible"
+        );
+
+    }
+
+
+    /*
+       BACK COVER
+    */
+
+    else if (
+        index >=
+        total - 1
+    ) {
+
+        positioner.style.transform =
+            "translateX(" +
+            (pageSize.width / 2) +
+            "px)";
+
+
+        binding.classList.remove(
+            "visible"
+        );
+
+    }
+
+
+    /*
+       INTERIOR SPREAD
+    */
+
+    else {
+
+        positioner.style.transform =
+            "translateX(0px)";
+
+
+        binding.classList.add(
+            "visible"
+        );
+
+    }
+
+}
+
+
+
+/* ==============================
+   UPDATE UI
+============================== */
+
+function updateUI(index) {
+
+    const total =
+        pageFlip.getPageCount();
+
+
+    const current =
+        index + 1;
+
+
+    counter.textContent =
+        current +
+        " / " +
+        total;
+
+
+    positionBook(index);
+
+
+    prev.style.opacity =
+        current <= 1
+        ? ".30"
+        : "1";
+
+
+    next.style.opacity =
+        current >= total
+        ? ".30"
+        : "1";
+
+}
+
+
+
+/* ==============================
+   PAGE STARTS TURNING
+============================== */
+
+pageFlip.on("changeState", e => {
+    if (e.data === "flipping") {
+        binding.classList.remove("visible");
+        positioner.style.transition = "none";
+        positioner.style.transform = "translateX(0px)";
+        playPageSound();
+    }
+});
+
+pageFlip.on("flip", e => {
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            positioner.style.transition = "transform 0.35s ease";
+            updateUI(e.data);
+        });
+    });
+});
+
+
+/* ==============================
+   BUTTONS
+============================== */
+
+prev.addEventListener(
+    "click",
+    () => {
+
+        pageFlip.flipPrev();
+
+    }
+);
+
+
+next.addEventListener(
+    "click",
+    () => {
+
+        pageFlip.flipNext();
+
+    }
+);
+
+
+
+/* ==============================
+   KEYBOARD
+============================== */
+
+document.addEventListener(
+    "keydown",
+    e => {
+
+        if (
+            e.key ===
+            "ArrowLeft"
+        ) {
+
+            pageFlip.flipPrev();
+
+        }
+
+
+        if (
+            e.key ===
+            "ArrowRight"
+        ) {
+
+            pageFlip.flipNext();
+
+        }
+
+    }
+);
+
+
+
+/* ==============================
+   INITIAL STATE
+============================== */
+
+positioner.style.transition = "none";
+updateUI(0);
+requestAnimationFrame(() => {
+    positioner.style.transition = "transform 0.35s ease";
+});
+
+
+
+/* ==============================
+   RESIZE
+============================== */
+
+let resizeTimer;
+
+
+window.addEventListener(
+    "resize",
+    () => {
+
+        clearTimeout(
+            resizeTimer
+        );
+
+
+        resizeTimer =
+            setTimeout(
+                () => {
+
+                    location.reload();
+
+                },
+                250
+            );
+
+    }
+);
+
+
+</script>
+
+
+</body>
+</html>
